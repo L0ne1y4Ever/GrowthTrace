@@ -16,7 +16,7 @@ GrowthTrace/
 ├── sql/
 │   ├── schema.sql  V1 11 张表 DDL
 │   └── seed.sql    demo 用户 + 最小演示数据（可选）
-└── docs/           答辩与课程文档（待生成）
+└── docs/           验收、联调、答辩文档
 ```
 
 ## 后端技术栈
@@ -89,4 +89,5 @@ npm run dev        # http://127.0.0.1:5173
 
 - [V1 验收清单](docs/V1-%E9%AA%8C%E6%94%B6%E6%B8%85%E5%8D%95.md)
 - [V1 演示脚本](docs/V1-%E6%BC%94%E7%A4%BA%E8%84%9A%E6%9C%AC.md)
+- [AI 手工验收清单](docs/AI-%E6%89%8B%E5%B7%A5%E9%AA%8C%E6%94%B6%E6%B8%85%E5%8D%95.md)
 - [联调与启动说明](docs/%E8%81%94%E8%B0%83%E4%B8%8E%E5%90%AF%E5%8A%A8%E8%AF%B4%E6%98%8E.md)

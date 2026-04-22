@@ -45,7 +45,7 @@
               <span class="text-xs text-slate-400">· v{{ r.profileVersionAtTrigger }}</span>
             </div>
             <div class="text-sm text-slate-800 mt-1.5 line-clamp-3">
-              {{ r.stageSummaryExcerpt || '（无 AI 摘要）' }}
+              {{ historySummaryText(r) }}
             </div>
             <div class="flex items-center gap-3 mt-2 text-xs text-slate-500">
               <span>重点问题 {{ r.keyProblemCount }} 条</span>
@@ -133,5 +133,11 @@ function aiBadgeClass(status: AiStatus) {
     FALLBACK: 'bg-amber-50 text-amber-700 border border-amber-100',
     FAILED: 'bg-red-50 text-red-700 border border-red-100'
   }[status]
+}
+
+function historySummaryText(item: DiagnosisSummary) {
+  if (item.stageSummaryExcerpt) return item.stageSummaryExcerpt
+  if (item.aiStatus === 'FAILED') return '（本次 AI 失败，仅保留规则指标与复盘内容）'
+  return '（无 AI 摘要）'
 }
 </script>

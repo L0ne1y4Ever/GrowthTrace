@@ -52,7 +52,14 @@ request.interceptors.response.use(
     const message =
       (body && typeof body === 'object' && 'message' in body ? (body as { message?: string }).message : error.message) ||
       '网络异常'
-    return Promise.reject(new Error(String(message)))
+    const err = new Error(String(message)) as Error & { code?: number; status?: number }
+    if (body && typeof body === 'object' && 'code' in body) {
+      err.code = Number((body as { code?: number }).code)
+    }
+    if (typeof status === 'number') {
+      err.status = status
+    }
+    return Promise.reject(err)
   }
 )
 

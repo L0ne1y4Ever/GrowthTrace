@@ -191,6 +191,12 @@
           <div v-if="overview.latestDiagnosis.stageSummaryExcerpt" class="text-sm text-slate-700 whitespace-pre-wrap">
             {{ overview.latestDiagnosis.stageSummaryExcerpt }}
           </div>
+          <div
+            v-else-if="overview.latestDiagnosis.aiStatus === 'FAILED'"
+            class="text-sm text-red-600 bg-red-50 border border-red-100 rounded px-3 py-2"
+          >
+            最近一次诊断的 AI 总结失败，当前仅保留规则指标结果。可稍后重新触发诊断。
+          </div>
 
           <div v-if="overview.latestDiagnosis.topSuggestions.length > 0" class="space-y-1">
             <div class="text-xs text-slate-500">建议</div>
