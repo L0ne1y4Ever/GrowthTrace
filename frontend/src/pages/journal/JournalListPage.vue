@@ -35,6 +35,24 @@
       <span v-if="!loading" class="text-xs text-slate-400">共 {{ total }} 条</span>
     </section>
 
+    <section
+      v-if="!loading && pendingConfirmRecords.length > 0"
+      class="bg-amber-50 border border-amber-100 rounded-lg px-4 py-3 flex items-start justify-between gap-3"
+    >
+      <div class="space-y-1">
+        <div class="text-sm font-medium text-amber-800">有 {{ pendingConfirmRecords.length }} 条随记草稿待确认</div>
+        <div class="text-xs text-amber-700">
+          先确认 AI 抽取结果，技能、事件和阻塞才会真正进入画像与诊断链路。
+        </div>
+      </div>
+      <RouterLink
+        :to="`/journal/${pendingConfirmRecords[0].id}`"
+        class="text-sm text-brand-600 hover:underline shrink-0"
+      >
+        先处理最近一条 →
+      </RouterLink>
+    </section>
+
     <!-- 列表 -->
     <div v-if="loading" class="text-sm text-slate-500">加载中…</div>
     <div v-else-if="loadError" class="text-sm text-red-600">{{ loadError }}</div>
@@ -196,6 +214,7 @@ const statusFilterOptions = [
 ]
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / PAGE_SIZE)))
+const pendingConfirmRecords = computed(() => records.value.filter((item) => item.extractionStatus === 'PENDING_CONFIRM'))
 
 const createForm = reactive({
   open: false,
