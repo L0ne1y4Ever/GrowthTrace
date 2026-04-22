@@ -1,0 +1,46 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  profiles:
+    active: dev
+  application:
+    name: growthtrace-backend
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    default-property-inclusion: non_null
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: isDeleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+      id-type: AUTO
+  mapper-locations: classpath:mapper/*.xml
+
+growthtrace:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:change-me-to-a-long-random-base64-secret-do-not-use-in-prod}
+      issuer: growthtrace
+      access-token-ttl-minutes: 120
+      refresh-token-ttl-days: 7
+    cors:
+      allowed-origins:
+        - http://localhost:5173
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allow-credentials: true
+  ai:
+    provider: openai-compatible
+    base-url: ${AI_BASE_URL:https://api.openai.com/v1}
+    api-key: ${AI_API_KEY:}
+    model: ${AI_MODEL:gpt-4o-mini}
+    timeout-seconds: 30
+    temperature: 0.2

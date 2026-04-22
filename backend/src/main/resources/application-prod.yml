@@ -1,0 +1,19 @@
+# application-prod.yml —— 生产环境占位（所有敏感值通过环境变量注入）
+# 实际部署时复制为 application-prod.yml 并按需调整。
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/growthtrace?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  configuration:
+    # 生产不打印 SQL 日志
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+logging:
+  level:
+    root: INFO
+    com.growthtrace: INFO
+    org.springframework.security: WARN
