@@ -38,7 +38,7 @@ Spring Boot 3.2.5 · Java 21 · Spring Security + JWT · MyBatis-Plus 3.5.7 · M
    mysql -u root -p growthtrace < sql/seed.sql
    ```
    demo 账号：`demo` / `password`（BCrypt 哈希，幂等可重复执行）。
-4. 设置环境变量（或改 `backend/src/main/resources/application-dev.yml`）：
+4. 设置环境变量（或改本地覆盖文件 `backend/src/main/resources/application-dev.local.yml`）：
    - `DB_USER`, `DB_PASSWORD`
    - `JWT_SECRET`（≥ 32 字符）
    - `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`（OpenAI 兼容端点）

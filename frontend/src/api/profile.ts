@@ -10,8 +10,12 @@ import type {
   SkillView
 } from '@/types/profile'
 
+const AI_REQUEST_TIMEOUT_MS = 90_000
+
 export function extractOnboarding(payload: OnboardingExtractPayload): Promise<OnboardingDraft> {
-  return request.post('/profile/onboarding/extract', payload) as unknown as Promise<OnboardingDraft>
+  return request.post('/profile/onboarding/extract', payload, {
+    timeout: AI_REQUEST_TIMEOUT_MS
+  }) as unknown as Promise<OnboardingDraft>
 }
 
 export function confirmOnboarding(payload: OnboardingConfirmPayload): Promise<void> {

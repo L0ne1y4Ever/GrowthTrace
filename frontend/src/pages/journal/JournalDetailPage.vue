@@ -51,7 +51,7 @@
               class="px-3 py-1.5 rounded-md bg-brand-600 text-white text-sm hover:bg-brand-700 disabled:opacity-60"
               @click="onExtract"
             >
-              {{ extracting ? 'AI 抽取中…（最长 30 秒）' : hasDraft ? '重新抽取' : 'AI 抽取草稿' }}
+              {{ extracting ? 'AI 抽取中…（可能需要 1 分钟左右）' : hasDraft ? '重新抽取' : 'AI 抽取草稿' }}
             </button>
           </div>
         </div>
@@ -284,6 +284,7 @@ import {
   fetchJournal,
   updateJournal
 } from '@/api/journal'
+import { explainAiError } from '@/utils/aiError'
 import type {
   ExtractionStatus,
   JournalDetailView,
@@ -374,7 +375,7 @@ async function onExtract() {
     await extractJournal(journalId.value)
     await load()
   } catch (e) {
-    extractError.value = (e as Error).message || 'AI 抽取失败'
+    extractError.value = explainAiError(e, 'AI 抽取失败，请稍后重试')
   } finally {
     extracting.value = false
   }

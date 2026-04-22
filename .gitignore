@@ -1,5 +1,6 @@
 # Backend
 backend/target/
+backend/src/main/resources/application-dev.local.yml
 backend/.mvn/
 backend/mvnw
 backend/mvnw.cmd

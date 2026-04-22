@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: optional:classpath:application-dev.local.yml
   datasource:
     url: jdbc:mysql://localhost:3306/growthtrace?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: ${DB_USER:root}

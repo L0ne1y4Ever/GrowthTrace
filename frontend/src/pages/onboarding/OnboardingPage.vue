@@ -49,7 +49,7 @@
           class="px-4 py-2 rounded-md bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 disabled:opacity-60 disabled:cursor-not-allowed"
           @click="onExtract"
         >
-          {{ extracting ? 'AI 抽取中…（最长 30 秒）' : (draft ? '重新抽取' : 'AI 抽取画像草稿') }}
+          {{ extracting ? 'AI 抽取中…（可能需要 1 分钟左右）' : (draft ? '重新抽取' : 'AI 抽取画像草稿') }}
         </button>
         <span v-if="draft" class="text-xs text-slate-400">草稿已生成，编辑确认后写入</span>
       </div>
@@ -252,6 +252,7 @@ import {
   confirmOnboarding as apiConfirm,
   extractOnboarding as apiExtract
 } from '@/api/profile'
+import { explainAiError } from '@/utils/aiError'
 import type {
   ExperiencePayload,
   OnboardingDraft,
@@ -287,7 +288,7 @@ async function onExtract() {
     const res = await apiExtract({ rawText: rawText.value.trim() })
     applyDraft(res)
   } catch (e) {
-    extractError.value = (e as Error).message || 'AI 抽取失败，请检查 AI_API_KEY 或稍后重试'
+    extractError.value = explainAiError(e, 'AI 抽取失败，请稍后重试')
   } finally {
     extracting.value = false
   }

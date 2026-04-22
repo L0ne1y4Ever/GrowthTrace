@@ -47,7 +47,7 @@
           class="px-4 py-2 rounded-md bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 disabled:opacity-60 disabled:cursor-not-allowed"
           @click="onTrigger"
         >
-          {{ triggering ? 'AI 诊断中…（最长 30 秒）' : '触发新一次诊断' }}
+          {{ triggering ? 'AI 诊断中…（可能需要 1 分钟左右）' : '触发新一次诊断' }}
         </button>
       </div>
 
@@ -56,7 +56,7 @@
       </div>
 
       <div v-if="triggering" class="text-xs text-slate-500">
-        正在计算本地 7 指标并请求 AI 总结…
+        正在计算本地 7 指标并请求 AI 总结，模型响应较慢时可能需要 1 分钟左右…
       </div>
     </section>
 
@@ -345,6 +345,7 @@ import {
   triggerDiagnosis,
   updateDiagnosisReview
 } from '@/api/diagnosis'
+import { explainAiError } from '@/utils/aiError'
 import type { ActivityPoint, AiStatus, DiagnosisView, RequirementProgress } from '@/types/diagnosis'
 
 const route = useRoute()
@@ -414,7 +415,7 @@ async function onTrigger() {
       router.replace({ path: '/diagnosis' })
     }
   } catch (e) {
-    triggerError.value = (e as Error).message || '触发失败，请稍后重试'
+    triggerError.value = explainAiError(e, '触发失败，请稍后重试')
   } finally {
     triggering.value = false
   }

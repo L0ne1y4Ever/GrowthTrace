@@ -7,8 +7,12 @@ import type {
   UpdateReviewNotesPayload
 } from '@/types/diagnosis'
 
+const AI_REQUEST_TIMEOUT_MS = 90_000
+
 export function triggerDiagnosis(payload: TriggerDiagnosisPayload = {}): Promise<DiagnosisView> {
-  return request.post('/diagnosis/trigger', payload) as unknown as Promise<DiagnosisView>
+  return request.post('/diagnosis/trigger', payload, {
+    timeout: AI_REQUEST_TIMEOUT_MS
+  }) as unknown as Promise<DiagnosisView>
 }
 
 export interface ListDiagnosisParams {

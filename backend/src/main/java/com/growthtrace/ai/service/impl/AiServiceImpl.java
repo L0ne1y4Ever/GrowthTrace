@@ -13,6 +13,7 @@ import com.growthtrace.ai.prompt.DiagnosisSummaryPrompt;
 import com.growthtrace.ai.prompt.JournalExtractPrompt;
 import com.growthtrace.ai.prompt.ProfileExtractPrompt;
 import com.growthtrace.ai.service.AiService;
+import com.growthtrace.common.enums.AiScenario;
 import com.growthtrace.config.AiProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +40,7 @@ public class AiServiceImpl implements AiService {
     @Override
     public ProfileExtractResult extractProfile(String onboardingText) {
         String prompt = profilePrompt.build(onboardingText);
-        String raw = provider.chat(prompt, timeout());
+        String raw = provider.chat(AiScenario.PROFILE_EXTRACT, prompt, timeout());
         log.debug("AI#PROFILE_EXTRACT raw length={}", raw.length());
         return profileParser.parse(raw);
     }
@@ -47,7 +48,7 @@ public class AiServiceImpl implements AiService {
     @Override
     public JournalExtractResult extractJournal(JournalExtractContext context) {
         String prompt = journalPrompt.build(context);
-        String raw = provider.chat(prompt, timeout());
+        String raw = provider.chat(AiScenario.JOURNAL_EXTRACT, prompt, timeout());
         log.debug("AI#JOURNAL_EXTRACT raw length={}", raw.length());
         return journalParser.parse(raw);
     }
@@ -55,7 +56,7 @@ public class AiServiceImpl implements AiService {
     @Override
     public DiagnosisSummaryResult summarizeDiagnosis(DiagnosisSummaryContext context) {
         String prompt = diagnosisPrompt.build(context);
-        String raw = provider.chat(prompt, timeout());
+        String raw = provider.chat(AiScenario.DIAGNOSIS_SUMMARY, prompt, timeout());
         log.debug("AI#DIAGNOSIS_SUMMARY raw length={}", raw.length());
         return diagnosisParser.parse(raw);
     }

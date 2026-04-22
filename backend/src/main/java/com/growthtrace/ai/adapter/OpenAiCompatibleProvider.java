@@ -1,6 +1,7 @@
 package com.growthtrace.ai.adapter;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.growthtrace.common.enums.AiScenario;
 import com.growthtrace.common.exception.AiException;
 import com.growthtrace.common.util.JsonUtils;
 import com.growthtrace.config.AiProperties;
@@ -28,13 +29,15 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class OpenAiCompatibleProvider implements AiProvider {
 
+    private static final int ERROR_BODY_PREVIEW_LEN = 300;
+
     private final AiProperties aiProperties;
 
     @Override
-    public String chat(String prompt, Duration timeout) {
-        if (!StringUtils.hasText(aiProperties.apiKey())) {
-            throw AiException.unavailable("AI apiKey 未配置（growthtrace.ai.api-key）", null);
-        }
+    public String chat(AiScenario scenario, String prompt, Duration timeout) {
+        validateRequiredConfig();
+        String baseUrl = normalizedBaseUrl();
+        long startNanos = System.nanoTime();
 
         Map<String, Object> payload = Map.of(
                 "model", aiProperties.model(),
@@ -48,11 +51,11 @@ public class OpenAiCompatibleProvider implements AiProvider {
         );
 
         HttpClient client = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(10))
+                .connectTimeout(Duration.ofSeconds(aiProperties.connectTimeoutSecondsOrDefault()))
                 .build();
 
         HttpRequest req = HttpRequest.newBuilder()
-                .uri(URI.create(aiProperties.baseUrl() + "/chat/completions"))
+                .uri(URI.create(baseUrl + "/chat/completions"))
                 .timeout(timeout)
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + aiProperties.apiKey())
@@ -60,11 +63,17 @@ public class OpenAiCompatibleProvider implements AiProvider {
                 .build();
 
         try {
+            log.info("AI request start: scenario={}, provider={}, model={}, baseUrl={}, timeoutSeconds={}",
+                    scenario, aiProperties.provider(), aiProperties.model(), baseUrl, timeout.toSeconds());
             HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+            long elapsedMs = elapsedMs(startNanos);
             if (resp.statusCode() / 100 != 2) {
-                log.warn("AI 调用非 2xx: status={}, body={}", resp.statusCode(), resp.body());
+                log.warn("AI request failed: scenario={}, status={}, elapsedMs={}, bodyPreview={}",
+                        scenario, resp.statusCode(), elapsedMs, preview(resp.body()));
                 throw AiException.unavailable("AI 返回 HTTP " + resp.statusCode(), null);
             }
+            log.info("AI request success: scenario={}, status={}, elapsedMs={}",
+                    scenario, resp.statusCode(), elapsedMs);
             JsonNode root = JsonUtils.mapper().readTree(resp.body());
             JsonNode content = root.path("choices").path(0).path("message").path("content");
             if (content.isMissingNode() || content.isNull()) {
@@ -72,11 +81,49 @@ public class OpenAiCompatibleProvider implements AiProvider {
             }
             return content.asText();
         } catch (HttpTimeoutException ex) {
+            log.warn("AI request timeout: scenario={}, elapsedMs={}, message={}",
+                    scenario, elapsedMs(startNanos), ex.getMessage());
             throw AiException.timeout("AI 调用超时: " + ex.getMessage());
         } catch (AiException ex) {
             throw ex;
         } catch (Exception ex) {
+            log.warn("AI request exception: scenario={}, elapsedMs={}, type={}, message={}",
+                    scenario, elapsedMs(startNanos), ex.getClass().getSimpleName(), ex.getMessage());
             throw AiException.unavailable("AI 调用失败: " + ex.getMessage(), ex);
         }
+    }
+
+    private void validateRequiredConfig() {
+        if (!StringUtils.hasText(aiProperties.baseUrl())) {
+            throw AiException.unavailable("AI baseUrl 未配置（growthtrace.ai.base-url）", null);
+        }
+        if (!StringUtils.hasText(aiProperties.apiKey())) {
+            throw AiException.unavailable("AI apiKey 未配置（growthtrace.ai.api-key）", null);
+        }
+        if (!StringUtils.hasText(aiProperties.model())) {
+            throw AiException.unavailable("AI model 未配置（growthtrace.ai.model）", null);
+        }
+    }
+
+    private String normalizedBaseUrl() {
+        String raw = aiProperties.baseUrl().trim();
+        while (raw.endsWith("/")) {
+            raw = raw.substring(0, raw.length() - 1);
+        }
+        return raw;
+    }
+
+    private static long elapsedMs(long startNanos) {
+        return (System.nanoTime() - startNanos) / 1_000_000;
+    }
+
+    private static String preview(String body) {
+        if (!StringUtils.hasText(body)) {
+            return "";
+        }
+        String compact = body.replaceAll("\\s+", " ").trim();
+        return compact.length() <= ERROR_BODY_PREVIEW_LEN
+                ? compact
+                : compact.substring(0, ERROR_BODY_PREVIEW_LEN) + "...";
     }
 }

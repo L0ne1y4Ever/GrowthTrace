@@ -8,9 +8,14 @@ public record AiProperties(
         String baseUrl,
         String apiKey,
         String model,
+        Integer connectTimeoutSeconds,
         Integer timeoutSeconds,
         Double temperature
 ) {
+    public int connectTimeoutSecondsOrDefault() {
+        return connectTimeoutSeconds == null ? 10 : connectTimeoutSeconds;
+    }
+
     public int timeoutSecondsOrDefault() {
         return timeoutSeconds == null ? 30 : timeoutSeconds;
     }

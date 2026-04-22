@@ -10,11 +10,15 @@ import org.springframework.test.context.TestPropertySource;
  */
 @SpringBootTest
 @TestPropertySource(properties = {
-        "spring.datasource.url=jdbc:mysql://localhost:3306/growthtrace?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true",
-        "spring.datasource.username=root",
-        "spring.datasource.password=root",
+        "spring.config.import=",
+        "spring.datasource.url=jdbc:h2:mem:growthtrace;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE",
+        "spring.datasource.driver-class-name=org.h2.Driver",
+        "spring.datasource.username=sa",
+        "spring.datasource.password=",
         "growthtrace.security.jwt.secret=growthtrace-test-secret-please-override-in-ci-env-32bytes",
-        "growthtrace.ai.api-key=test"
+        "growthtrace.ai.base-url=https://api.example.com/v1",
+        "growthtrace.ai.api-key=test",
+        "growthtrace.ai.model=test-model"
 })
 class GrowthTraceApplicationTests {
 

@@ -10,6 +10,8 @@ import type {
   UpdateJournalPayload
 } from '@/types/journal'
 
+const AI_REQUEST_TIMEOUT_MS = 90_000
+
 export interface ListJournalParams {
   status?: 'POSTED' | 'ARCHIVED'
   page?: number
@@ -33,7 +35,9 @@ export function updateJournal(id: number, payload: UpdateJournalPayload): Promis
 }
 
 export function extractJournal(id: number): Promise<ExtractionView> {
-  return request.post(`/journal/${id}/extract`) as unknown as Promise<ExtractionView>
+  return request.post(`/journal/${id}/extract`, undefined, {
+    timeout: AI_REQUEST_TIMEOUT_MS
+  }) as unknown as Promise<ExtractionView>
 }
 
 export function confirmExtraction(id: number, payload: ConfirmExtractionPayload): Promise<ExtractionView> {
