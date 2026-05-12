@@ -1,0 +1,15 @@
+﻿@startuml
+actor "学生用户" as Student
+participant "执行页" as Web
+participant "任务服务" as API
+participant "目标/要求数据" as Target
+participant "AI 服务" as AI
+Student -> Web : 点击 AI 生成任务
+Web -> API : 提交草案请求
+API -> Target : 读取目标与 requirement 上下文
+API -> AI : 请求生成任务草案
+AI --> API : 返回标题、描述、验收标准
+API --> Web : 返回草案
+Student -> Web : 确认或修改
+Web -> API : 创建任务
+@enduml

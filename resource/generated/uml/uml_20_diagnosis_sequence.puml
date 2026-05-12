@@ -1,0 +1,16 @@
+﻿@startuml
+actor "学生用户" as Student
+participant "诊断页" as Web
+participant "诊断服务" as API
+database "数据库" as DB
+participant "指标计算器" as Metrics
+participant "AI 服务" as AI
+Student -> Web : 选择回看窗口
+Web -> API : 触发诊断
+API -> DB : 读取画像、目标、任务、随记
+API -> Metrics : 计算规则指标
+API -> AI : 请求阶段总结与建议
+AI --> API : 返回总结、问题、建议
+API -> DB : 保存诊断记录
+API --> Web : 返回诊断结果
+@enduml

@@ -1,0 +1,10 @@
+[2026-04-27 15:40:03] backup=D:\GrowthTrace\resource\GrowthTrace-软件需求规格说明书-迭代版-再订正.backup-202604271540.doc
+[2026-04-27 15:40:07] opened
+[2026-04-27 15:40:07] replace headline and audience
+[2026-04-27 15:40:26] insert capability boundary and use-case extensions
+[2026-04-27 15:40:52] figure check
+[2026-04-27 15:40:55] figure fig1=exists fig2=exists
+[2026-04-27 15:40:55] remove remaining forbidden word
+[2026-04-27 15:40:56] update toc
+[2026-04-27 15:40:56] save
+[2026-04-27 15:40:57] saved

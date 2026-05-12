@@ -1,33 +1,34 @@
 <template>
-  <div class="min-h-screen flex bg-slate-50">
-    <aside class="w-56 shrink-0 border-r border-slate-200 bg-white flex flex-col">
-      <div class="px-4 py-5 border-b border-slate-200">
-        <div class="text-lg font-semibold text-slate-800">GrowthTrace</div>
-        <div class="text-xs text-slate-500 mt-0.5">成长跟踪 · 阶段诊断</div>
+  <div class="h-screen flex overflow-hidden bg-transparent">
+    <aside class="sticky top-0 h-screen w-64 shrink-0 border-r border-slate-200/80 bg-white/85 backdrop-blur-xl flex flex-col">
+      <div class="px-5 py-6 border-b border-slate-200/80">
+        <div class="text-xs uppercase tracking-[0.35em] text-slate-400">GrowthTrace</div>
+        <div class="text-xl font-semibold mt-1 text-slate-950">成长跟踪</div>
+        <div class="text-xs text-slate-500 mt-2">目标 · 执行 · 随记 · 诊断</div>
       </div>
 
-      <nav class="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
+      <nav class="flex-1 overflow-y-auto py-3 px-3 space-y-1">
         <RouterLink
           v-for="item in navItems"
           :key="item.to"
           :to="item.to"
-          class="block px-3 py-2 rounded-md text-sm text-slate-600 hover:bg-slate-100 transition-colors"
-          active-class="bg-brand-50 text-brand-700 font-medium"
+          class="block px-3 py-2.5 rounded-2xl text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-950 transition-colors"
+          active-class="bg-slate-950 text-white font-medium shadow-sm"
         >
           {{ item.label }}
         </RouterLink>
       </nav>
 
-      <div class="border-t border-slate-200 p-3 flex items-center justify-between text-xs">
+      <div class="border-t border-slate-200/80 p-3 flex items-center justify-between text-xs">
         <div class="truncate">
-          <span class="text-slate-500">当前：</span>
+          <span class="text-slate-400">当前：</span>
           <span class="text-slate-700">{{ auth.user?.nickname || auth.user?.username || '未登录' }}</span>
         </div>
-        <button class="text-brand-600 hover:underline" @click="logout">退出</button>
+        <button class="text-slate-500 hover:text-slate-950" @click="logout">退出</button>
       </div>
     </aside>
 
-    <main class="flex-1 overflow-auto">
+    <main class="app-main h-screen flex-1 overflow-y-auto">
       <RouterView />
     </main>
   </div>

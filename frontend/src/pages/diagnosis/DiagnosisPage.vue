@@ -1,10 +1,11 @@
 <template>
-  <div class="p-6 max-w-5xl mx-auto space-y-6">
+  <div class="gt-page">
     <!-- Header -->
-    <header class="flex items-start justify-between gap-4">
+    <header class="gt-header flex items-start justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-semibold text-slate-800">阶段诊断</h1>
-        <p class="text-sm text-slate-500 mt-1">
+        <div class="gt-eyebrow">Diagnosis</div>
+        <h1 class="gt-title">阶段诊断</h1>
+        <p class="gt-subtitle">
           手动触发。系统先本地计算 7 指标（journal / task / skill / profile / target / activity），再调 AI 生成
           <span class="text-slate-700">阶段总结 · 重点问题 · 建议 · 纠偏方向</span>。
           <span class="text-slate-400">轻复盘并入同一条记录，不单独成模块。</span>
@@ -21,7 +22,7 @@
     </header>
 
     <!-- 触发区 -->
-    <section class="bg-white border border-slate-200 rounded-lg p-5 space-y-3">
+    <section class="gt-card p-5 space-y-3">
       <div class="flex flex-wrap items-center gap-3">
         <label class="text-sm text-slate-600">回看窗口</label>
         <div class="flex items-center gap-1">
@@ -77,7 +78,7 @@
     <!-- 诊断内容 -->
     <template v-else>
       <!-- 元信息 -->
-      <section class="bg-white border border-slate-200 rounded-lg p-5 space-y-2">
+      <section class="gt-card p-5 space-y-2">
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-xs px-2 py-0.5 rounded" :class="aiBadgeClass(diagnosis.aiStatus)">
             AI · {{ diagnosis.aiStatus }}
@@ -94,7 +95,7 @@
       </section>
 
       <!-- 指标区 -->
-      <section class="bg-white border border-slate-200 rounded-lg p-5 space-y-4">
+      <section class="gt-card p-5 space-y-4">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-medium text-slate-700">本地规则指标（7 类）</h2>
           <span class="text-xs text-slate-400">由 DiagnosisMetricsService 在 AI 前计算</span>
@@ -194,7 +195,7 @@
 
       <!-- AI 总结 -->
       <section
-        class="bg-white border border-slate-200 rounded-lg p-5 space-y-4"
+        class="gt-card p-5 space-y-4"
         :class="diagnosis.aiStatus === 'FAILED' ? 'opacity-90' : ''"
       >
         <div class="flex items-center justify-between">
@@ -249,6 +250,13 @@
             <div v-if="s.detail" class="text-xs text-slate-600 mt-1 whitespace-pre-wrap">
               {{ String(s.detail) }}
             </div>
+            <button
+              type="button"
+              class="text-xs text-brand-600 hover:underline mt-2"
+              @click="createTaskFromSuggestion(s)"
+            >
+              AI 转任务 →
+            </button>
           </div>
         </div>
 
@@ -261,13 +269,20 @@
               <span v-if="c.rationale" class="text-xs text-slate-500">
                 —— {{ String(c.rationale) }}
               </span>
+              <button
+                type="button"
+                class="text-xs text-brand-600 hover:underline ml-2"
+                @click="createTaskFromCorrection(c)"
+              >
+                AI 转任务
+              </button>
             </li>
           </ul>
         </div>
       </section>
 
       <!-- 轻复盘 -->
-      <section class="bg-white border border-slate-200 rounded-lg p-5 space-y-4">
+      <section class="gt-card p-5 space-y-4">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-medium text-slate-700">轻复盘</h2>
           <span class="text-xs text-slate-400">
@@ -345,8 +360,10 @@ import {
   triggerDiagnosis,
   updateDiagnosisReview
 } from '@/api/diagnosis'
+import { listTargets } from '@/api/target'
 import { explainAiError } from '@/utils/aiError'
 import type { ActivityPoint, AiStatus, DiagnosisView, RequirementProgress } from '@/types/diagnosis'
+import type { TargetView } from '@/types/target'
 
 const route = useRoute()
 const router = useRouter()
@@ -358,6 +375,7 @@ const diagnosis = ref<DiagnosisView | null>(null)
 const loading = ref(true)
 const triggering = ref(false)
 const triggerError = ref('')
+const activeTargets = ref<TargetView[]>([])
 
 const reviewForm = reactive({
   wins: [] as string[],
@@ -394,12 +412,21 @@ async function load() {
         diagnosis.value = await fetchDiagnosis(history.records[0].id)
       }
     }
+    await loadActiveTargets()
     hydrateReviewForm()
   } catch (e) {
     diagnosis.value = null
     triggerError.value = (e as Error).message || '加载失败'
   } finally {
     loading.value = false
+  }
+}
+
+async function loadActiveTargets() {
+  try {
+    activeTargets.value = await listTargets({ status: 'ACTIVE' })
+  } catch {
+    activeTargets.value = []
   }
 }
 
@@ -493,5 +520,33 @@ function priorityBadgeClass(p: string) {
   if (u === 'HIGH') return 'bg-red-50 text-red-700 border border-red-100'
   if (u === 'LOW') return 'bg-slate-100 text-slate-600 border border-slate-200'
   return 'bg-brand-50 text-brand-700 border border-brand-100'
+}
+
+function primaryTargetId() {
+  return activeTargets.value.find((target) => target.isPrimary)?.id ?? null
+}
+
+function createTaskFromSuggestion(s: Record<string, unknown>) {
+  void router.push({
+    path: '/execution',
+    query: {
+      source: 'diagnosis-suggestion',
+      targetId: primaryTargetId() == null ? undefined : String(primaryTargetId()),
+      title: String(s.title ?? '落实诊断建议'),
+      description: String(s.detail ?? '')
+    }
+  })
+}
+
+function createTaskFromCorrection(c: Record<string, unknown>) {
+  void router.push({
+    path: '/execution',
+    query: {
+      source: 'diagnosis-correction',
+      targetId: primaryTargetId() == null ? undefined : String(primaryTargetId()),
+      title: String(c.direction ?? '落实纠偏方向'),
+      description: String(c.rationale ?? '')
+    }
+  })
 }
 </script>

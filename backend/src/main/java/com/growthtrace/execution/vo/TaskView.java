@@ -15,6 +15,9 @@ public class TaskView {
     private Long userId;
     private Long targetId;
     private Long requirementId;
+    private String targetTitle;
+    private String requirementName;
+    private String requirementStatus;
     private String title;
     private String description;
 

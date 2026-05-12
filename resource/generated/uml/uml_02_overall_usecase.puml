@@ -1,0 +1,29 @@
+﻿@startuml
+!pragma layout smetana
+left to right direction
+skinparam packageStyle rectangle
+actor "学生用户" as Student
+actor "系统维护人员" as Maintainer
+actor "AI 服务" as AI
+rectangle "GrowthTrace" {
+  usecase "注册与登录" as UC1
+  usecase "建立成长画像" as UC2
+  usecase "维护目标与 requirement" as UC3
+  usecase "创建执行任务" as UC4
+  usecase "记录成长随记" as UC5
+  usecase "触发阶段诊断" as UC6
+  usecase "查看 Dashboard 行动总览" as UC7
+  usecase "配置运行环境" as UC8
+}
+Student --> UC1
+Student --> UC2
+Student --> UC3
+Student --> UC4
+Student --> UC5
+Student --> UC6
+Student --> UC7
+AI --> UC2
+AI --> UC5
+AI --> UC6
+Maintainer --> UC8
+@enduml

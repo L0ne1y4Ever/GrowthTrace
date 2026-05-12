@@ -2,16 +2,21 @@ package com.growthtrace.execution.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.growthtrace.ai.dto.TaskDraftContext;
+import com.growthtrace.ai.dto.TaskDraftResult;
+import com.growthtrace.ai.service.AiService;
 import com.growthtrace.common.exception.BusinessException;
 import com.growthtrace.common.result.ResultCode;
 import com.growthtrace.common.util.JsonUtils;
 import com.growthtrace.execution.dto.CheckInRequest;
 import com.growthtrace.execution.dto.CreateTaskRequest;
+import com.growthtrace.execution.dto.GenerateTaskDraftRequest;
 import com.growthtrace.execution.dto.UpdateTaskRequest;
 import com.growthtrace.execution.dto.UpdateTaskStatusRequest;
 import com.growthtrace.execution.entity.GrowthTask;
 import com.growthtrace.execution.mapper.GrowthTaskMapper;
 import com.growthtrace.execution.service.TaskService;
+import com.growthtrace.execution.vo.TaskDraftView;
 import com.growthtrace.execution.vo.TaskView;
 import com.growthtrace.execution.vo.WeeklyProgressView;
 import com.growthtrace.target.entity.GrowthTarget;
@@ -42,6 +47,7 @@ public class TaskServiceImpl implements TaskService {
     private final GrowthTaskMapper taskMapper;
     private final GrowthTargetMapper targetMapper;
     private final TargetRequirementMapper requirementMapper;
+    private final AiService aiService;
 
     // ----------------- CRUD -----------------
 
@@ -69,7 +75,46 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public List<TaskView> list(Long userId, String statusFilter, Long targetIdFilter) {
+    public TaskDraftView generateDraft(Long userId, GenerateTaskDraftRequest payload) {
+        GrowthTarget target = null;
+        TargetRequirement requirement = null;
+        if (payload.getTargetId() != null || payload.getRequirementId() != null) {
+            validateTargetAndRequirement(userId, payload.getTargetId(), payload.getRequirementId());
+        }
+        if (payload.getTargetId() != null) {
+            target = targetMapper.selectById(payload.getTargetId());
+        }
+        if (payload.getRequirementId() != null) {
+            requirement = requirementMapper.selectById(payload.getRequirementId());
+            if (target == null && requirement != null) {
+                target = targetMapper.selectById(requirement.getTargetId());
+            }
+        }
+
+        TaskDraftContext context = TaskDraftContext.builder()
+                .sourceType(StringUtils.hasText(payload.getSourceType()) ? payload.getSourceType() : "MANUAL")
+                .seedTitle(payload.getTitle())
+                .seedDescription(payload.getDescription())
+                .targetType(target == null ? null : target.getTargetType())
+                .targetTitle(target == null ? null : target.getTitle())
+                .targetDescription(target == null ? null : target.getDescription())
+                .requirementName(requirement == null ? null : requirement.getReqName())
+                .requirementType(requirement == null ? null : requirement.getReqType())
+                .requirementStatus(requirement == null ? null : requirement.getStatus())
+                .requirementDescription(requirement == null ? null : requirement.getDescription())
+                .build();
+
+        try {
+            return toDraftView("SUCCESS", aiService.generateTaskDraft(context), context);
+        } catch (Exception e) {
+            log.warn("AI task draft fallback: userId={}, targetId={}, requirementId={}, reason={}",
+                    userId, payload.getTargetId(), payload.getRequirementId(), e.getMessage());
+            return toDraftView("FALLBACK", fallbackDraft(context), context);
+        }
+    }
+
+    @Override
+    public List<TaskView> list(Long userId, String statusFilter, Long targetIdFilter, Long requirementIdFilter) {
         LambdaQueryWrapper<GrowthTask> q = new LambdaQueryWrapper<GrowthTask>()
                 .eq(GrowthTask::getUserId, userId);
         if (StringUtils.hasText(statusFilter)) {
@@ -80,6 +125,9 @@ public class TaskServiceImpl implements TaskService {
         }
         if (targetIdFilter != null) {
             q.eq(GrowthTask::getTargetId, targetIdFilter);
+        }
+        if (requirementIdFilter != null) {
+            q.eq(GrowthTask::getRequirementId, requirementIdFilter);
         }
         // 优先级 HIGH > MEDIUM > LOW；同级按 due_date 升序（null 靠后），再按 id 降序。
         q.orderByAsc(GrowthTask::getDueDate).orderByDesc(GrowthTask::getId);
@@ -93,7 +141,7 @@ public class TaskServiceImpl implements TaskService {
             if (b.getDueDate() == null) return -1;
             return a.getDueDate().compareTo(b.getDueDate());
         });
-        return rows.stream().map(TaskServiceImpl::toView).toList();
+        return rows.stream().map(this::toView).toList();
     }
 
     @Override
@@ -124,6 +172,10 @@ public class TaskServiceImpl implements TaskService {
         GrowthTask t = requireOwned(userId, taskId);
         String newStatus = payload.getStatus();
         if (!newStatus.equals(t.getStatus())) {
+            String oldStatus = t.getStatus();
+            if ("DONE".equals(newStatus)) {
+                applyCompletionEvidence(t, payload);
+            }
             t.setStatus(newStatus);
             if ("DONE".equals(newStatus)) {
                 if (t.getCompletedAt() == null) {
@@ -134,7 +186,7 @@ public class TaskServiceImpl implements TaskService {
                 t.setCompletedAt(null);
             }
             taskMapper.updateById(t);
-            log.info("task status changed: taskId={}, {} -> {}", taskId, t.getStatus(), newStatus);
+            log.info("task status changed: taskId={}, {} -> {}", taskId, oldStatus, newStatus);
         }
         return toView(taskMapper.selectById(taskId));
     }
@@ -307,15 +359,116 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
-    private static TaskView toView(GrowthTask t) {
+    private TaskDraftResult fallbackDraft(TaskDraftContext context) {
+        String baseTitle = firstText(context.getSeedTitle(), context.getRequirementName(), "推进一个成长任务");
+        String target = firstText(context.getTargetTitle(), "当前目标");
+        String requirement = firstText(context.getRequirementName(), "当前要求");
+        return TaskDraftResult.builder()
+                .title(baseTitle.startsWith("推进") ? baseTitle : "推进：" + baseTitle)
+                .description("""
+                        围绕「%s」中的「%s」做一次可观察推进。
+                        请先明确本次要产出的最小成果，再用打卡记录过程，完成时补充证据。
+                        """.formatted(target, requirement).trim())
+                .priority("MEDIUM")
+                .dueDate(LocalDate.now().plusDays(7))
+                .plannedEffortMinutes(180)
+                .acceptanceCriteria(List.of(
+                        "形成一份可查看的学习/实践产出",
+                        "至少完成 1 次打卡并记录投入时间",
+                        "完成时填写证据或复盘说明"))
+                .checkInPlan(List.of(
+                        "第 1 次打卡：拆出本任务的最小可交付成果",
+                        "中间打卡：记录实际推进内容、卡点和下一步",
+                        "完成前：对照验收标准补齐证据"))
+                .evidenceSuggestions(List.of("提交链接、截图、笔记、代码记录或不少于 50 字复盘"))
+                .build();
+    }
+
+    private TaskDraftView toDraftView(String aiStatus, TaskDraftResult result, TaskDraftContext context) {
+        String title = firstText(result.getTitle(), context.getSeedTitle(), context.getRequirementName(), "成长推进任务");
+        List<String> criteria = defaultIfEmpty(result.getAcceptanceCriteria(), List.of("完成后能给出明确证据"));
+        List<String> checkIns = defaultIfEmpty(result.getCheckInPlan(), List.of("至少完成一次打卡，记录实际推进内容"));
+        List<String> evidence = defaultIfEmpty(result.getEvidenceSuggestions(), List.of("完成说明、截图、链接、代码或笔记"));
+        String description = firstText(result.getDescription(), context.getSeedDescription(), "");
+        String structured = appendGuidance(description, criteria, checkIns, evidence);
+        return TaskDraftView.builder()
+                .aiStatus(aiStatus)
+                .title(limit(title, 255))
+                .description(limit(structured, 2000))
+                .priority(resolvePriority(result.getPriority()))
+                .dueDate(result.getDueDate() == null ? LocalDate.now().plusDays(7) : result.getDueDate())
+                .plannedEffortMinutes(result.getPlannedEffortMinutes() == null ? 180 : result.getPlannedEffortMinutes())
+                .acceptanceCriteria(criteria)
+                .checkInPlan(checkIns)
+                .evidenceSuggestions(evidence)
+                .build();
+    }
+
+    private String appendGuidance(String description, List<String> criteria, List<String> checkIns, List<String> evidence) {
+        StringBuilder sb = new StringBuilder(StringUtils.hasText(description) ? description.trim() : "按下列标准推进并验收。");
+        sb.append("\n\n验收标准：");
+        appendList(sb, criteria);
+        sb.append("\n\n建议打卡计划：");
+        appendList(sb, checkIns);
+        sb.append("\n\n完成证据建议：");
+        appendList(sb, evidence);
+        return sb.toString();
+    }
+
+    private void appendList(StringBuilder sb, List<String> list) {
+        for (int i = 0; i < list.size(); i++) {
+            sb.append("\n").append(i + 1).append(". ").append(list.get(i));
+        }
+    }
+
+    private void applyCompletionEvidence(GrowthTask t, UpdateTaskStatusRequest payload) {
+        String evidence = payload.getCompletionEvidence();
+        boolean hasEvidence = StringUtils.hasText(evidence);
+        int checkInCount = t.getCheckInCount() == null ? 0 : t.getCheckInCount();
+        if (!hasEvidence && checkInCount <= 0) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "完成任务前至少需要一次打卡或填写完成证据");
+        }
+        if (hasEvidence) {
+            String current = t.getDescription() == null ? "" : t.getDescription().trim();
+            String addition = "\n\n完成证据（%s）：\n%s".formatted(LocalDate.now(), evidence.trim());
+            t.setDescription(limit((current + addition).trim(), 2000));
+        }
+        if (payload.getEffortMinutes() != null && payload.getEffortMinutes() > 0) {
+            int current = t.getActualEffortMinutes() == null ? 0 : t.getActualEffortMinutes();
+            t.setActualEffortMinutes(current + payload.getEffortMinutes());
+        }
+    }
+
+    private String firstText(String... values) {
+        for (String value : values) {
+            if (StringUtils.hasText(value)) return value.trim();
+        }
+        return "";
+    }
+
+    private List<String> defaultIfEmpty(List<String> values, List<String> fallback) {
+        return values == null || values.isEmpty() ? fallback : values;
+    }
+
+    private String limit(String value, int max) {
+        if (value == null || value.length() <= max) return value;
+        return value.substring(0, max);
+    }
+
+    private TaskView toView(GrowthTask t) {
         List<String> dates = parseDateList(t.getCheckInDates());
         Set<String> set = new HashSet<>(dates);
         boolean checkedToday = set.contains(LocalDate.now().toString());
+        GrowthTarget target = t.getTargetId() == null ? null : targetMapper.selectById(t.getTargetId());
+        TargetRequirement requirement = t.getRequirementId() == null ? null : requirementMapper.selectById(t.getRequirementId());
         return TaskView.builder()
                 .id(t.getId())
                 .userId(t.getUserId())
                 .targetId(t.getTargetId())
                 .requirementId(t.getRequirementId())
+                .targetTitle(target == null ? null : target.getTitle())
+                .requirementName(requirement == null ? null : requirement.getReqName())
+                .requirementStatus(requirement == null ? null : requirement.getStatus())
                 .title(t.getTitle())
                 .description(t.getDescription())
                 .status(t.getStatus())

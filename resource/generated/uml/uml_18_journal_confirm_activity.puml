@@ -1,0 +1,16 @@
+﻿@startuml
+start
+:打开随记详情;
+if (是否存在抽取草稿?) then (否)
+  :触发 AI 抽取;
+endif
+:查看技能、事件、阻塞与 requirement 影响;
+if (草稿可信?) then (是)
+  :用户确认;
+  :写入画像或目标要求;
+else (否)
+  :修改草稿或丢弃;
+endif
+:更新随记抽取状态;
+stop
+@enduml

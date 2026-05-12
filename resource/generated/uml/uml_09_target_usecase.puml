@@ -1,0 +1,19 @@
+﻿@startuml
+!pragma layout smetana
+left to right direction
+actor "学生用户" as Student
+rectangle "目标管理模块" {
+  usecase "创建成长目标" as UC1
+  usecase "编辑目标信息" as UC2
+  usecase "设为主目标" as UC3
+  usecase "新增 requirement" as UC4
+  usecase "维护 requirement 状态" as UC5
+  usecase "查看目标进度" as UC6
+}
+Student --> UC1
+Student --> UC2
+Student --> UC3
+Student --> UC4
+Student --> UC5
+Student --> UC6
+@enduml

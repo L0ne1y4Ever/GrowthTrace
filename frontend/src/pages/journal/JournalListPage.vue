@@ -1,15 +1,16 @@
 <template>
-  <div class="p-6 max-w-5xl mx-auto space-y-6">
-    <header class="flex items-start justify-between gap-4">
+  <div class="gt-page">
+    <header class="gt-header flex items-start justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-semibold text-slate-800">成长随记</h1>
-        <p class="text-sm text-slate-500 mt-1">
+        <div class="gt-eyebrow">Journal</div>
+        <h1 class="gt-title">成长随记</h1>
+        <p class="gt-subtitle">
           自由文本记录 → AI 抽取成长事件草稿 → 用户确认归档。
         </p>
       </div>
       <button
         type="button"
-        class="px-3 py-1.5 rounded-md bg-brand-600 text-white text-sm hover:bg-brand-700"
+        class="gt-button-primary"
         @click="openCreate"
       >
         + 写一条随记
@@ -17,7 +18,7 @@
     </header>
 
     <!-- 过滤条 -->
-    <section class="bg-white border border-slate-200 rounded-lg px-4 py-3 flex items-center gap-3">
+    <section class="gt-card px-4 py-3 flex items-center gap-3">
       <span class="text-sm text-slate-600">状态：</span>
       <button
         v-for="opt in statusFilterOptions"
@@ -66,7 +67,7 @@
         v-for="j in records"
         :key="j.id"
         :to="`/journal/${j.id}`"
-        class="block bg-white border border-slate-200 rounded-lg p-4 hover:border-brand-300 transition-colors"
+        class="block gt-card p-4 transition hover:-translate-y-0.5 hover:border-slate-300"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0 flex-1">

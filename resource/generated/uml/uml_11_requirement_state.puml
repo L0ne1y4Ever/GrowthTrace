@@ -1,0 +1,9 @@
+﻿@startuml
+[*] --> TODO
+TODO --> IN_PROGRESS : 生成任务或手动推进
+IN_PROGRESS --> MET : 用户确认达成
+TODO --> MET : 随记抽取确认达成
+MET --> IN_PROGRESS : 复核后重新推进
+IN_PROGRESS --> TODO : 调整目标要求
+MET --> [*]
+@enduml

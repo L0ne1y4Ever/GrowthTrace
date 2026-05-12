@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 max-w-3xl mx-auto space-y-6">
+  <div class="gt-page max-w-3xl">
     <!-- 顶部导航 -->
     <div class="flex items-center justify-between">
       <RouterLink to="/journal" class="text-sm text-brand-600 hover:underline">← 随记列表</RouterLink>
@@ -19,7 +19,7 @@
 
     <template v-else-if="detail">
       <!-- 原文卡片 -->
-      <section class="bg-white border border-slate-200 rounded-lg p-6 space-y-3">
+      <section class="gt-card p-6 space-y-3">
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-xs text-slate-500">{{ formatDate(detail.journal.createdAt) }}</span>
           <span v-if="detail.journal.mood" class="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{{ moodEmoji(detail.journal.mood) }}</span>
@@ -37,7 +37,7 @@
       </section>
 
       <!-- 抽取区 -->
-      <section class="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
+      <section class="gt-card p-6 space-y-4">
         <div class="flex items-center justify-between gap-3">
           <h2 class="text-sm font-medium text-slate-700">AI 成长事件抽取</h2>
           <div class="flex items-center gap-2">
@@ -117,7 +117,7 @@
             <label class="text-sm text-slate-600">相关目标要求的状态变更</label>
             <div v-for="(r, i) in draftReqs" :key="`rr-${i}`" class="border border-slate-200 rounded-md p-3 space-y-2">
               <div class="grid grid-cols-12 gap-2 items-center">
-                <span class="col-span-3 text-xs text-slate-500">Requirement #{{ r.requirementId }}</span>
+                <span class="col-span-3 text-xs text-slate-500 truncate">{{ requirementLabel(r.requirementId) }}</span>
                 <select
                   v-model="r.newStatus"
                   class="col-span-3 px-2 py-1.5 border border-slate-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -206,7 +206,15 @@
             <div class="text-xs text-slate-500">已应用的要求状态变更</div>
             <ul class="text-sm text-slate-700 list-disc pl-5 space-y-0.5">
               <li v-for="(r, i) in (detail.extraction.confirmedRelatedRequirements ?? [])" :key="`cr-${i}`">
-                Requirement #{{ r.requirementId }} → {{ r.newStatus || '—' }}
+                <RouterLink
+                  v-if="requirementContext(Number(r.requirementId))"
+                  :to="{ path: '/target', query: { targetId: requirementContext(Number(r.requirementId))?.targetId, requirementId: Number(r.requirementId) } }"
+                  class="text-brand-600 hover:underline"
+                >
+                  {{ requirementLabel(Number(r.requirementId)) }}
+                </RouterLink>
+                <span v-else>{{ requirementLabel(Number(r.requirementId)) }}</span>
+                → {{ r.newStatus || '—' }}
               </li>
             </ul>
           </div>
@@ -284,6 +292,7 @@ import {
   fetchJournal,
   updateJournal
 } from '@/api/journal'
+import { fetchTargetDetail, listTargets } from '@/api/target'
 import { explainAiError } from '@/utils/aiError'
 import type {
   ExtractionStatus,
@@ -292,6 +301,7 @@ import type {
   NewSkillConfirm,
   RequirementUpdateConfirm
 } from '@/types/journal'
+import type { TargetView } from '@/types/target'
 
 const route = useRoute()
 const journalId = computed(() => Number(route.params.id))
@@ -310,6 +320,12 @@ const draftSkills = reactive<NewSkillConfirm[]>([])
 const draftReqs = reactive<RequirementUpdateConfirm[]>([])
 const draftEvents = reactive<Record<string, unknown>[]>([])
 const draftBlockers = reactive<string[]>([])
+const requirementContexts = ref<Record<number, {
+  targetId: number
+  targetTitle: string
+  reqName: string
+  status: string
+}>>({})
 
 const editForm = reactive({
   open: false,
@@ -328,11 +344,33 @@ async function load() {
   loadError.value = ''
   try {
     detail.value = await fetchJournal(journalId.value)
+    await loadRequirementContexts()
     hydrateDraft()
   } catch (e) {
     loadError.value = (e as Error).message || '加载失败'
   } finally {
     loading.value = false
+  }
+}
+
+async function loadRequirementContexts() {
+  try {
+    const targets = await listTargets()
+    const groups = await Promise.all(
+      targets.map(async (target: TargetView) => {
+        const targetDetail = await fetchTargetDetail(target.id)
+        return targetDetail.requirements.map((req) => ({
+          id: req.id,
+          targetId: target.id,
+          targetTitle: target.title,
+          reqName: req.reqName,
+          status: req.status
+        }))
+      })
+    )
+    requirementContexts.value = Object.fromEntries(groups.flat().map((item) => [item.id, item]))
+  } catch {
+    requirementContexts.value = {}
   }
 }
 
@@ -504,6 +542,16 @@ function normalizeReqStatus(v: unknown): '' | 'TODO' | 'IN_PROGRESS' | 'MET' {
   const s = String(v ?? '').toUpperCase()
   if (s === 'TODO' || s === 'IN_PROGRESS' || s === 'MET') return s
   return ''
+}
+
+function requirementContext(id: number) {
+  return requirementContexts.value[id] ?? null
+}
+
+function requirementLabel(id: number) {
+  const ctx = requirementContext(id)
+  if (!ctx) return `Requirement #${id}`
+  return `${ctx.targetTitle} / ${ctx.reqName}（${ctx.status}）`
 }
 
 type _ExtractionStatus = ExtractionStatus

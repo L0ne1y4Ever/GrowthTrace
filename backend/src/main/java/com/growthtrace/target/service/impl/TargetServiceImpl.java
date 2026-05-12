@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.growthtrace.common.exception.BusinessException;
 import com.growthtrace.common.result.ResultCode;
+import com.growthtrace.execution.entity.GrowthTask;
+import com.growthtrace.execution.mapper.GrowthTaskMapper;
 import com.growthtrace.profile.entity.GrowthProfile;
 import com.growthtrace.profile.mapper.GrowthProfileMapper;
 import com.growthtrace.profile.service.ProfileCompletenessCalculator;
@@ -44,6 +46,7 @@ public class TargetServiceImpl implements TargetService {
     private final TargetTemplateCatalog templateCatalog;
     private final ProfileCompletenessCalculator completenessCalculator;
     private final GrowthProfileMapper profileMapper;
+    private final GrowthTaskMapper taskMapper;
 
     // ---------------- templates ----------------
 
@@ -276,7 +279,7 @@ public class TargetServiceImpl implements TargetService {
         );
         return TargetDetailView.builder()
                 .target(toView(t, stats))
-                .requirements(reqs.stream().map(TargetServiceImpl::toRequirementView).toList())
+                .requirements(reqs.stream().map(this::toRequirementView).toList())
                 .build();
     }
 
@@ -352,7 +355,12 @@ public class TargetServiceImpl implements TargetService {
                 .build();
     }
 
-    private static RequirementView toRequirementView(TargetRequirement r) {
+    private RequirementView toRequirementView(TargetRequirement r) {
+        List<GrowthTask> tasks = taskMapper.selectList(new LambdaQueryWrapper<GrowthTask>()
+                .eq(GrowthTask::getRequirementId, r.getId()));
+        int activeTaskCount = (int) tasks.stream()
+                .filter(t -> "TODO".equals(t.getStatus()) || "IN_PROGRESS".equals(t.getStatus()))
+                .count();
         return RequirementView.builder()
                 .id(r.getId())
                 .targetId(r.getTargetId())
@@ -365,6 +373,8 @@ public class TargetServiceImpl implements TargetService {
                 .linkedSkillId(r.getLinkedSkillId())
                 .linkedExperienceId(r.getLinkedExperienceId())
                 .progress(r.getProgress())
+                .taskCount(tasks.size())
+                .activeTaskCount(activeTaskCount)
                 .createdAt(r.getCreatedAt())
                 .updatedAt(r.getUpdatedAt())
                 .build();

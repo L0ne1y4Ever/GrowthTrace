@@ -2,8 +2,10 @@ package com.growthtrace.execution.service;
 
 import com.growthtrace.execution.dto.CheckInRequest;
 import com.growthtrace.execution.dto.CreateTaskRequest;
+import com.growthtrace.execution.dto.GenerateTaskDraftRequest;
 import com.growthtrace.execution.dto.UpdateTaskRequest;
 import com.growthtrace.execution.dto.UpdateTaskStatusRequest;
+import com.growthtrace.execution.vo.TaskDraftView;
 import com.growthtrace.execution.vo.TaskView;
 import com.growthtrace.execution.vo.WeeklyProgressView;
 
@@ -17,11 +19,13 @@ public interface TaskService {
 
     TaskView create(Long userId, CreateTaskRequest payload);
 
+    TaskDraftView generateDraft(Long userId, GenerateTaskDraftRequest payload);
+
     /**
      * 列出任务；statusFilter 为 null/空时返回 TODO/IN_PROGRESS/DONE（默认隐藏 ABANDONED，UI 用专门标签打开）。
-     * targetIdFilter 可选。
+     * targetIdFilter / requirementIdFilter 可选。
      */
-    List<TaskView> list(Long userId, String statusFilter, Long targetIdFilter);
+    List<TaskView> list(Long userId, String statusFilter, Long targetIdFilter, Long requirementIdFilter);
 
     TaskView get(Long userId, Long taskId);
 

@@ -1,0 +1,18 @@
+﻿@startuml
+actor "学生用户" as Student
+participant "随记页" as Web
+participant "随记服务" as API
+participant "AI 服务" as AI
+database "数据库" as DB
+Student -> Web : 编写成长随记
+Web -> API : 保存随记
+API -> DB : 写入原始随记
+Student -> Web : 触发抽取
+Web -> API : 请求 AI 抽取
+API -> AI : 发送随记与目标上下文
+AI --> API : 返回技能/事件/要求变更草稿
+API --> Web : 展示待确认草稿
+Student -> Web : 确认抽取
+Web -> API : 提交确认
+API -> DB : 回写成长事件与要求状态
+@enduml

@@ -1,24 +1,25 @@
 <template>
-  <div class="p-6 max-w-5xl mx-auto space-y-6">
+  <div class="gt-page">
     <!-- Header -->
-    <header class="flex items-start justify-between gap-4">
+    <header class="gt-header flex items-start justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-semibold text-slate-800">成长档案</h1>
-        <p class="text-sm text-slate-500 mt-1">
-          画像、技能、经历的读写入口。技能按 ACTIVE 优先排序，经历按开始日期倒序。
+        <div class="gt-eyebrow">Profile</div>
+        <h1 class="gt-title">成长档案</h1>
+        <p class="gt-subtitle">
+          画像、技能和经历共同构成 AI 抽取、目标联动与阶段诊断的上下文。
         </p>
       </div>
       <div class="flex gap-2">
         <RouterLink
           to="/onboarding"
-          class="px-3 py-1.5 rounded-md border border-slate-300 text-sm text-slate-600 hover:bg-slate-50"
+          class="gt-button-soft"
         >
           重新建档
         </RouterLink>
         <button
           type="button"
           :disabled="refreshing || !profile"
-          class="px-3 py-1.5 rounded-md border border-slate-300 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-60"
+          class="gt-button-soft"
           @click="onRefreshCompleteness"
         >
           {{ refreshing ? '重算中…' : '重算完整度' }}
@@ -38,7 +39,7 @@
 
     <template v-else-if="profile">
       <!-- 画像头部 -->
-      <section class="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
+      <section class="gt-card p-6 space-y-4">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-medium text-slate-700">画像 · v{{ profile.version }}</h2>
           <div class="text-xs text-slate-400">source: {{ profile.source || '—' }}</div>
@@ -96,7 +97,7 @@
       </section>
 
       <!-- 技能 -->
-      <section class="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
+      <section class="gt-card p-6 space-y-4">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-medium text-slate-700">技能（{{ profile.skills.length }}）</h2>
           <button
@@ -136,7 +137,7 @@
       </section>
 
       <!-- 经历 -->
-      <section class="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
+      <section class="gt-card p-6 space-y-4">
         <div class="flex items-center justify-between">
           <h2 class="text-sm font-medium text-slate-700">经历（{{ profile.experiences.length }}）</h2>
           <button
@@ -308,6 +309,8 @@
             <input
               v-model="expForm.startDate"
               type="date"
+              min="1900-01-01"
+              max="2099-12-31"
               class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
@@ -316,6 +319,8 @@
             <input
               v-model="expForm.endDate"
               type="date"
+              min="1900-01-01"
+              max="2099-12-31"
               class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>

@@ -1,16 +1,17 @@
 <template>
-  <div class="p-6 max-w-6xl mx-auto space-y-6">
-    <header class="flex items-start justify-between gap-4">
+  <div class="gt-page">
+    <header class="gt-header flex items-start justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-semibold text-slate-800">成长总览</h1>
-        <p class="text-sm text-slate-500 mt-1">
-          不是 AI 首页 —— 读缓存列 + 组合 6 个模块的轻量视图；AI 洞察卡片只展示"最近一次"阶段诊断。
+        <div class="gt-eyebrow">Overview</div>
+        <h1 class="gt-title">成长总览</h1>
+        <p class="gt-subtitle">
+          汇总画像、目标、执行、随记和诊断状态，优先呈现下一步行动，而不是后台统计列表。
         </p>
       </div>
       <button
         type="button"
         :disabled="loading"
-        class="text-sm text-brand-600 hover:underline disabled:opacity-50"
+        class="gt-button-soft"
         @click="load"
       >
         {{ loading ? '加载中…' : '刷新' }}
@@ -24,7 +25,7 @@
     <div v-if="loading && !overview" class="text-sm text-slate-500">加载中…</div>
 
     <template v-else-if="overview">
-      <section class="bg-amber-50 border border-amber-100 rounded-lg p-5 space-y-3">
+      <section class="gt-card p-5 space-y-3">
         <div class="flex items-center justify-between gap-3">
           <div>
             <h2 class="text-sm font-medium text-slate-800">本周建议先做这几步</h2>
@@ -37,7 +38,7 @@
           <div
             v-for="(action, index) in nextActions"
             :key="action.title"
-            class="bg-white border rounded-lg p-4 space-y-2"
+            class="bg-white border rounded-2xl p-4 space-y-2"
             :class="action.level === 'high' ? 'border-red-100' : action.level === 'medium' ? 'border-amber-100' : 'border-slate-200'"
           >
             <div class="flex items-center justify-between gap-2">
@@ -63,14 +64,14 @@
       </section>
 
       <!-- 热力图 -->
-      <section class="bg-white border border-slate-200 rounded-lg p-5">
+      <section class="gt-card p-5">
         <HeatmapGrid :points="overview.heatmap ?? []" />
       </section>
 
       <!-- 三卡：完整度 / 主目标 / 本周任务 -->
       <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <!-- 画像完整度 -->
-        <div class="bg-white border border-slate-200 rounded-lg p-5 space-y-3">
+        <div class="gt-card p-5 space-y-3">
           <div class="flex items-center justify-between">
             <div class="text-sm font-medium text-slate-700">画像完整度</div>
             <RouterLink to="/profile" class="text-xs text-brand-600 hover:underline">去完善</RouterLink>
@@ -96,7 +97,7 @@
         </div>
 
         <!-- 当前主目标 -->
-        <div class="bg-white border border-slate-200 rounded-lg p-5 space-y-3">
+        <div class="gt-card p-5 space-y-3">
           <div class="flex items-center justify-between">
             <div class="text-sm font-medium text-slate-700">当前主目标</div>
             <RouterLink to="/target" class="text-xs text-brand-600 hover:underline">管理</RouterLink>
@@ -132,7 +133,7 @@
         </div>
 
         <!-- 本周任务 -->
-        <div class="bg-white border border-slate-200 rounded-lg p-5 space-y-3">
+        <div class="gt-card p-5 space-y-3">
           <div class="flex items-center justify-between">
             <div class="text-sm font-medium text-slate-700">本周任务</div>
             <RouterLink to="/execution" class="text-xs text-brand-600 hover:underline">看板</RouterLink>
@@ -162,11 +163,11 @@
 
       <!-- 成长曲线 + 最近随记 -->
       <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="bg-white border border-slate-200 rounded-lg p-5">
+        <div class="gt-card p-5">
           <GrowthCurveChart :points="overview.growthCurve ?? []" />
         </div>
 
-        <div class="bg-white border border-slate-200 rounded-lg p-5 space-y-3">
+        <div class="gt-card p-5 space-y-3">
           <div class="flex items-center justify-between">
             <div class="text-sm font-medium text-slate-700">最近随记</div>
             <RouterLink to="/journal" class="text-xs text-brand-600 hover:underline">全部</RouterLink>
@@ -202,7 +203,7 @@
       </section>
 
       <!-- 最新一次诊断洞察 -->
-      <section class="bg-white border border-slate-200 rounded-lg p-5 space-y-3">
+      <section class="gt-card p-5 space-y-3">
         <div class="flex items-center justify-between">
           <div class="text-sm font-medium text-slate-700">最近一次阶段诊断</div>
           <RouterLink to="/diagnosis" class="text-xs text-brand-600 hover:underline">去诊断</RouterLink>
@@ -266,12 +267,15 @@ import { RouterLink } from 'vue-router'
 import HeatmapGrid from '@/components/dashboard/HeatmapGrid.vue'
 import GrowthCurveChart from '@/components/dashboard/GrowthCurveChart.vue'
 import { fetchOverview } from '@/api/dashboard'
+import { fetchTargetDetail } from '@/api/target'
 import type { DashboardOverviewView } from '@/types/dashboard'
+import type { TargetDetailView } from '@/types/target'
 
 const overview = ref<DashboardOverviewView | null>(null)
+const primaryTargetDetail = ref<TargetDetailView | null>(null)
 const loading = ref(true)
 const loadError = ref('')
-const nextActions = computed(() => buildNextActions(overview.value))
+const nextActions = computed(() => buildNextActions(overview.value, primaryTargetDetail.value))
 
 onMounted(load)
 
@@ -280,6 +284,15 @@ async function load() {
   loadError.value = ''
   try {
     overview.value = await fetchOverview()
+    if (overview.value.primaryTarget?.id) {
+      try {
+        primaryTargetDetail.value = await fetchTargetDetail(overview.value.primaryTarget.id)
+      } catch {
+        primaryTargetDetail.value = null
+      }
+    } else {
+      primaryTargetDetail.value = null
+    }
   } catch (e) {
     loadError.value = (e as Error).message || '加载失败'
   } finally {
@@ -334,7 +347,7 @@ interface NextAction {
   levelLabel: string
 }
 
-function buildNextActions(data: DashboardOverviewView | null): NextAction[] {
+function buildNextActions(data: DashboardOverviewView | null, targetDetail: TargetDetailView | null): NextAction[] {
   if (!data) return []
 
   const actions: NextAction[] = []
@@ -343,6 +356,9 @@ function buildNextActions(data: DashboardOverviewView | null): NextAction[] {
   const weeklyTask = data.weeklyTask
   const latestDiagnosis = data.latestDiagnosis
   const primaryTarget = data.primaryTarget
+  const nextRequirement = targetDetail?.requirements.find((item) =>
+    item.status !== 'MET' && (item.taskCount ?? 0) === 0
+  )
 
   if (profileCompleteness == null) {
     actions.push({
@@ -378,9 +394,18 @@ function buildNextActions(data: DashboardOverviewView | null): NextAction[] {
       title: '给主目标补充可验证要求',
       detail: `当前目标“${primaryTarget.title}”还没有 requirement，后续很难衡量是否真的在推进。`,
       cta: '补目标要求',
-      to: '/target',
+      to: `/target?targetId=${primaryTarget.id}`,
       level: 'medium',
       levelLabel: '目标不够具体'
+    })
+  } else if (nextRequirement) {
+    actions.push({
+      title: '把目标要求转成执行任务',
+      detail: `“${nextRequirement.reqName}”还没有关联任务，建议先生成一条本周能推进的行动项。`,
+      cta: '去生成任务',
+      to: `/target?targetId=${primaryTarget.id}&requirementId=${nextRequirement.id}`,
+      level: 'medium',
+      levelLabel: '目标待落地'
     })
   }
 
@@ -448,7 +473,7 @@ function buildNextActions(data: DashboardOverviewView | null): NextAction[] {
     actions.push({
       title: '复查最近一次诊断结果',
       detail: '最近一次诊断使用了降级结果，建议人工看一遍建议和纠偏方向，再决定本周任务。',
-      cta: '查看诊断',
+      cta: '查看并转任务',
       to: '/diagnosis',
       level: 'low',
       levelLabel: '建议复查'

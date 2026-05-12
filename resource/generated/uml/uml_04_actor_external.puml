@@ -1,0 +1,15 @@
+﻿@startuml
+!pragma layout smetana
+skinparam componentStyle rectangle
+actor "学生用户" as Student
+actor "系统维护人员" as Maintainer
+cloud "OpenAI-compatible\nAI 服务" as AI
+database "MySQL 数据库" as DB
+component "浏览器前端" as Web
+component "Spring Boot 后端" as API
+Student --> Web
+Maintainer --> API : 配置与维护
+Web --> API : HTTP/JSON
+API --> DB : 读写成长数据
+API --> AI : AI 抽取/总结请求
+@enduml

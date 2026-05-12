@@ -21,6 +21,8 @@ public class RequirementView {
     private Long linkedSkillId;
     private Long linkedExperienceId;
     private Integer progress;
+    private Integer taskCount;
+    private Integer activeTaskCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

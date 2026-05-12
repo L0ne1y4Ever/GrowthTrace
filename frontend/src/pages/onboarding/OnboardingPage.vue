@@ -1,15 +1,16 @@
 <template>
-  <div class="p-6 max-w-3xl mx-auto space-y-6">
-    <header>
-      <h1 class="text-2xl font-semibold text-slate-800">建档引导</h1>
-      <p class="text-sm text-slate-500 mt-1">
+  <div class="gt-page max-w-3xl">
+    <header class="gt-header">
+      <div class="gt-eyebrow">Onboarding</div>
+      <h1 class="gt-title">建档引导</h1>
+      <p class="gt-subtitle">
         写一段自然语言自述，由 AI 抽取画像草稿。草稿你可以编辑，确认后才会正式写入档案。
         <span class="text-slate-400">每次确认会把画像版本号 +1。</span>
       </p>
     </header>
 
     <!-- 1. 原始输入 -->
-    <section class="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
+    <section class="gt-card p-6 space-y-4">
       <h2 class="text-sm font-medium text-slate-700">1. 自我描述</h2>
 
       <div>
@@ -60,7 +61,7 @@
     </section>
 
     <!-- 2. 草稿编辑 -->
-    <section v-if="draft" class="bg-white border border-slate-200 rounded-lg p-6 space-y-5">
+    <section v-if="draft" class="gt-card p-6 space-y-5">
       <h2 class="text-sm font-medium text-slate-700">2. 编辑草稿</h2>
 
       <!-- summary -->
@@ -203,11 +204,15 @@
             <input
               v-model="item.startDate"
               type="date"
+              min="1900-01-01"
+              max="2099-12-31"
               class="col-span-3 px-2 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
             <input
               v-model="item.endDate"
               type="date"
+              min="1900-01-01"
+              max="2099-12-31"
               class="col-span-3 px-2 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>

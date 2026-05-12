@@ -1,0 +1,11 @@
+﻿@startuml
+[*] --> TODO
+TODO --> IN_PROGRESS : 首次打卡
+TODO --> DONE : 填写完成证据
+IN_PROGRESS --> DONE : 完成并提交证据
+TODO --> ABANDONED : 放弃任务
+IN_PROGRESS --> ABANDONED : 放弃任务
+ABANDONED --> TODO : 恢复任务
+DONE --> IN_PROGRESS : 复核后重开
+DONE --> [*]
+@enduml

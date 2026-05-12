@@ -8,6 +8,9 @@ export interface TaskView {
   userId: number
   targetId?: number | null
   requirementId?: number | null
+  targetTitle?: string | null
+  requirementName?: string | null
+  requirementStatus?: string | null
   title: string
   description?: string | null
   status: TaskStatus
@@ -21,6 +24,18 @@ export interface TaskView {
   createdAt?: string
   updatedAt?: string
   checkedInToday: boolean
+}
+
+export interface TaskDraftView {
+  aiStatus: 'SUCCESS' | 'FALLBACK'
+  title: string
+  description: string
+  priority: TaskPriority
+  dueDate?: string | null
+  plannedEffortMinutes?: number | null
+  acceptanceCriteria: string[]
+  checkInPlan: string[]
+  evidenceSuggestions: string[]
 }
 
 export interface WeeklyProgressView {
@@ -56,9 +71,19 @@ export interface UpdateTaskPayload {
 
 export interface UpdateTaskStatusPayload {
   status: TaskStatus
+  completionEvidence?: string
+  effortMinutes?: number
 }
 
 export interface CheckInPayload {
   date?: string
   effortMinutes?: number
+}
+
+export interface GenerateTaskDraftPayload {
+  sourceType?: 'REQUIREMENT' | 'DIAGNOSIS_SUGGESTION' | 'DIAGNOSIS_CORRECTION' | 'MANUAL'
+  targetId?: number | null
+  requirementId?: number | null
+  title?: string
+  description?: string
 }

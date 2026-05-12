@@ -1,9 +1,10 @@
 <template>
-  <div class="p-6 max-w-4xl mx-auto space-y-6">
-    <header class="flex items-start justify-between gap-4">
+  <div class="gt-page max-w-4xl">
+    <header class="gt-header flex items-start justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-semibold text-slate-800">诊断历史</h1>
-        <p class="text-sm text-slate-500 mt-1">
+        <div class="gt-eyebrow">History</div>
+        <h1 class="gt-title">诊断历史</h1>
+        <p class="gt-subtitle">
           按创建时间倒序。点击进入详情可查看指标、AI 总结、轻复盘。
         </p>
       </div>
@@ -27,7 +28,7 @@
         v-for="r in records"
         :key="r.id"
         :to="{ path: '/diagnosis', query: { id: r.id } }"
-        class="block bg-white border border-slate-200 rounded-lg p-4 hover:border-brand-300 transition-colors"
+        class="block gt-card p-4 transition hover:-translate-y-0.5 hover:border-slate-300"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0 flex-1">

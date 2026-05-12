@@ -1,0 +1,17 @@
+﻿@startuml
+!pragma layout smetana
+left to right direction
+actor "学生用户" as Student
+rectangle "认证模块" {
+  usecase "注册账号" as UC1
+  usecase "登录系统" as UC2
+  usecase "获取当前用户" as UC3
+  usecase "退出登录" as UC4
+  usecase "校验访问令牌" as UC5
+}
+Student --> UC1
+Student --> UC2
+Student --> UC3
+Student --> UC4
+UC2 --> UC5 : <<include>>
+@enduml

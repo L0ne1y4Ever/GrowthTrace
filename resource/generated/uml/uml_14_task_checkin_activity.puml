@@ -1,0 +1,18 @@
+﻿@startuml
+start
+:查看任务卡片;
+if (今日是否已打卡?) then (否)
+  :填写投入时间;
+  :记录打卡日期;
+  :任务进入推进状态;
+endif
+if (准备标记完成?) then (是)
+  if (已有打卡或完成证据?) then (是)
+    :提交完成证据;
+    :任务状态变更为 DONE;
+  else (否)
+    :提示需打卡或填写证据;
+  endif
+endif
+stop
+@enduml

@@ -48,6 +48,8 @@ export interface RequirementView {
   linkedSkillId?: number | null
   linkedExperienceId?: number | null
   progress: number
+  taskCount?: number
+  activeTaskCount?: number
   createdAt?: string
   updatedAt?: string
 }

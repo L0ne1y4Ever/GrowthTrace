@@ -1,0 +1,20 @@
+﻿@startuml
+!pragma layout smetana
+left to right direction
+actor "学生用户" as Student
+actor "AI 服务" as AI
+rectangle "成长随记模块" {
+  usecase "编写随记" as UC1
+  usecase "编辑随记" as UC2
+  usecase "触发 AI 抽取" as UC3
+  usecase "确认抽取草稿" as UC4
+  usecase "归档成长事件" as UC5
+  usecase "查看随记列表" as UC6
+}
+Student --> UC1
+Student --> UC2
+Student --> UC4
+Student --> UC6
+AI --> UC3
+UC4 --> UC5 : <<include>>
+@enduml

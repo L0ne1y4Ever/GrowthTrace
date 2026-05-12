@@ -1,0 +1,48 @@
+﻿@startuml
+!pragma layout smetana
+class User {
+  id
+  username
+}
+class GrowthProfile {
+  summary
+  completeness
+}
+class Skill
+class Experience
+class GrowthTarget {
+  title
+  status
+  isPrimary
+}
+class TargetRequirement {
+  reqName
+  status
+  progress
+}
+class GrowthTask {
+  title
+  status
+  priority
+}
+class Journal {
+  content
+  mood
+}
+class JournalExtraction {
+  status
+}
+class StageAssessment {
+  metrics
+  aiStatus
+}
+User "1" -- "1" GrowthProfile
+GrowthProfile "1" -- "*" Skill
+GrowthProfile "1" -- "*" Experience
+User "1" -- "*" GrowthTarget
+GrowthTarget "1" -- "*" TargetRequirement
+TargetRequirement "1" -- "*" GrowthTask
+User "1" -- "*" Journal
+Journal "1" -- "0..1" JournalExtraction
+User "1" -- "*" StageAssessment
+@enduml

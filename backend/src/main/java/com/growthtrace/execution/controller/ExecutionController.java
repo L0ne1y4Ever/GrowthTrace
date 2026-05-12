@@ -4,9 +4,11 @@ import com.growthtrace.common.result.R;
 import com.growthtrace.common.security.SecurityUserDetails;
 import com.growthtrace.execution.dto.CheckInRequest;
 import com.growthtrace.execution.dto.CreateTaskRequest;
+import com.growthtrace.execution.dto.GenerateTaskDraftRequest;
 import com.growthtrace.execution.dto.UpdateTaskRequest;
 import com.growthtrace.execution.dto.UpdateTaskStatusRequest;
 import com.growthtrace.execution.service.TaskService;
+import com.growthtrace.execution.vo.TaskDraftView;
 import com.growthtrace.execution.vo.TaskView;
 import com.growthtrace.execution.vo.WeeklyProgressView;
 import jakarta.validation.Valid;
@@ -36,12 +38,19 @@ public class ExecutionController {
         return R.ok(taskService.create(userId, payload));
     }
 
+    @PostMapping("/task/draft")
+    public R<TaskDraftView> generateDraft(@Valid @RequestBody GenerateTaskDraftRequest payload) {
+        Long userId = SecurityUserDetails.requireCurrentUserId();
+        return R.ok(taskService.generateDraft(userId, payload));
+    }
+
     @GetMapping("/task")
     public R<List<TaskView>> list(
             @RequestParam(value = "status", required = false) String status,
-            @RequestParam(value = "targetId", required = false) Long targetId) {
+            @RequestParam(value = "targetId", required = false) Long targetId,
+            @RequestParam(value = "requirementId", required = false) Long requirementId) {
         Long userId = SecurityUserDetails.requireCurrentUserId();
-        return R.ok(taskService.list(userId, status, targetId));
+        return R.ok(taskService.list(userId, status, targetId, requirementId));
     }
 
     @GetMapping("/task/{id}")

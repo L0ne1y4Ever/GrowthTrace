@@ -6,12 +6,16 @@ import com.growthtrace.ai.dto.DiagnosisSummaryResult;
 import com.growthtrace.ai.dto.JournalExtractContext;
 import com.growthtrace.ai.dto.JournalExtractResult;
 import com.growthtrace.ai.dto.ProfileExtractResult;
+import com.growthtrace.ai.dto.TaskDraftContext;
+import com.growthtrace.ai.dto.TaskDraftResult;
 import com.growthtrace.ai.parser.DiagnosisSummaryParser;
 import com.growthtrace.ai.parser.JournalExtractParser;
 import com.growthtrace.ai.parser.ProfileExtractParser;
+import com.growthtrace.ai.parser.TaskDraftParser;
 import com.growthtrace.ai.prompt.DiagnosisSummaryPrompt;
 import com.growthtrace.ai.prompt.JournalExtractPrompt;
 import com.growthtrace.ai.prompt.ProfileExtractPrompt;
+import com.growthtrace.ai.prompt.TaskDraftPrompt;
 import com.growthtrace.ai.service.AiService;
 import com.growthtrace.common.enums.AiScenario;
 import com.growthtrace.config.AiProperties;
@@ -32,10 +36,12 @@ public class AiServiceImpl implements AiService {
     private final ProfileExtractPrompt profilePrompt;
     private final JournalExtractPrompt journalPrompt;
     private final DiagnosisSummaryPrompt diagnosisPrompt;
+    private final TaskDraftPrompt taskDraftPrompt;
 
     private final ProfileExtractParser profileParser;
     private final JournalExtractParser journalParser;
     private final DiagnosisSummaryParser diagnosisParser;
+    private final TaskDraftParser taskDraftParser;
 
     @Override
     public ProfileExtractResult extractProfile(String onboardingText) {
@@ -59,6 +65,14 @@ public class AiServiceImpl implements AiService {
         String raw = provider.chat(AiScenario.DIAGNOSIS_SUMMARY, prompt, timeout());
         log.debug("AI#DIAGNOSIS_SUMMARY raw length={}", raw.length());
         return diagnosisParser.parse(raw);
+    }
+
+    @Override
+    public TaskDraftResult generateTaskDraft(TaskDraftContext context) {
+        String prompt = taskDraftPrompt.build(context);
+        String raw = provider.chat(AiScenario.TASK_DRAFT, prompt, timeout());
+        log.debug("AI#TASK_DRAFT raw length={}", raw.length());
+        return taskDraftParser.parse(raw);
     }
 
     private Duration timeout() {

@@ -2,6 +2,8 @@ import request from '@/utils/request'
 import type {
   CheckInPayload,
   CreateTaskPayload,
+  GenerateTaskDraftPayload,
+  TaskDraftView,
   TaskStatus,
   TaskView,
   UpdateTaskPayload,
@@ -13,9 +15,14 @@ export function createTask(payload: CreateTaskPayload): Promise<TaskView> {
   return request.post('/execution/task', payload) as unknown as Promise<TaskView>
 }
 
+export function generateTaskDraft(payload: GenerateTaskDraftPayload): Promise<TaskDraftView> {
+  return request.post('/execution/task/draft', payload, { timeout: 90_000 }) as unknown as Promise<TaskDraftView>
+}
+
 export interface ListTasksParams {
   status?: TaskStatus
   targetId?: number
+  requirementId?: number
 }
 
 export function listTasks(params: ListTasksParams = {}): Promise<TaskView[]> {

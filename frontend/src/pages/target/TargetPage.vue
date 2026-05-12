@@ -1,15 +1,16 @@
 <template>
-  <div class="p-6 max-w-5xl mx-auto space-y-6">
-    <header class="flex items-start justify-between gap-4">
+  <div class="gt-page">
+    <header class="gt-header flex items-start justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-semibold text-slate-800">目标设定</h1>
-        <p class="text-sm text-slate-500 mt-1">
-          三类目标：求职 / 考研 / 技能成长。每个目标需要 ≥1 条要求；主目标同一时间至多一个。
+        <div class="gt-eyebrow">Targets</div>
+        <h1 class="gt-title">目标设定</h1>
+        <p class="gt-subtitle">
+          把阶段方向拆成可验证要求，再联动执行任务、随记抽取和阶段诊断。
         </p>
       </div>
       <button
         type="button"
-        class="px-3 py-1.5 rounded-md bg-brand-600 text-white text-sm hover:bg-brand-700"
+        class="gt-button-primary"
         @click="openCreate"
       >
         + 新建目标
@@ -17,7 +18,7 @@
     </header>
 
     <!-- 状态过滤 -->
-    <section class="bg-white border border-slate-200 rounded-lg px-4 py-3 flex items-center gap-3">
+    <section class="gt-card px-4 py-3 flex items-center gap-3">
       <span class="text-sm text-slate-600">状态：</span>
       <button
         v-for="opt in statusFilterOptions"
@@ -47,7 +48,7 @@
       <div
         v-for="t in targets"
         :key="t.id"
-        class="bg-white border rounded-lg p-4"
+        class="gt-card p-4"
         :class="t.isPrimary ? 'border-brand-400 shadow-sm' : 'border-slate-200'"
       >
         <div class="flex items-start justify-between gap-3">
@@ -138,7 +139,8 @@
             <div
               v-for="r in expandedDetail.requirements"
               :key="r.id"
-              class="border border-slate-200 rounded-md p-3"
+              class="border rounded-md p-3 transition-colors"
+              :class="highlightedRequirementId === r.id ? 'border-brand-400 bg-brand-50/60' : 'border-slate-200'"
             >
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0 flex-1">
@@ -148,6 +150,14 @@
                     <span v-if="r.dueDate" class="text-xs text-slate-400">due {{ r.dueDate }}</span>
                   </div>
                   <div v-if="r.description" class="text-xs text-slate-500 mt-1">{{ r.description }}</div>
+                  <div class="flex flex-wrap gap-2 mt-2 text-xs text-slate-500">
+                    <span class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200">
+                      关联任务 {{ r.taskCount ?? 0 }}
+                    </span>
+                    <span class="px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 border border-brand-100">
+                      进行中 {{ r.activeTaskCount ?? 0 }}
+                    </span>
+                  </div>
                   <div class="flex items-center gap-2 mt-2">
                     <div class="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
                       <div class="h-1 bg-brand-500 rounded-full" :style="{ width: `${r.progress}%` }" />
@@ -165,7 +175,9 @@
                     <option value="IN_PROGRESS">IN_PROGRESS</option>
                     <option value="MET">MET</option>
                   </select>
-                  <div class="flex gap-2">
+                  <div class="flex gap-2 flex-wrap justify-end">
+                    <button type="button" class="text-xs text-brand-600 hover:underline" @click="createTaskFromRequirement(t.id, r)">AI 生成任务</button>
+                    <button type="button" class="text-xs text-brand-600 hover:underline" @click="viewRequirementTasks(t.id, r.id)">看任务</button>
                     <button type="button" class="text-xs text-brand-600 hover:underline" @click="openEditRequirement(t.id, r)">编辑</button>
                     <button type="button" class="text-xs text-slate-400 hover:text-red-600" @click="onDeleteRequirement(t.id, r.id)">删除</button>
                   </div>
@@ -258,6 +270,8 @@
             <input
               v-model="createForm.deadline"
               type="date"
+              min="1900-01-01"
+              max="2099-12-31"
               class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
@@ -361,6 +375,8 @@
           <input
             v-model="editTargetForm.deadline"
             type="date"
+            min="1900-01-01"
+            max="2099-12-31"
             class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
@@ -449,6 +465,8 @@
             <input
               v-model="reqForm.dueDate"
               type="date"
+              min="1900-01-01"
+              max="2099-12-31"
               class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
@@ -473,7 +491,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   addRequirement,
   createTarget,
@@ -500,6 +519,9 @@ import type {
   TargetView
 } from '@/types/target'
 
+const route = useRoute()
+const router = useRouter()
+
 const targets = ref<TargetView[]>([])
 const templates = ref<TargetTemplateVO[]>([])
 const loading = ref(true)
@@ -509,6 +531,7 @@ const filterStatus = ref<'' | TargetStatus>('')
 const expandedId = ref<number | null>(null)
 const expandedDetail = ref<TargetDetailView | null>(null)
 const expandedLoading = ref(false)
+const highlightedRequirementId = ref<number | null>(null)
 
 const statusFilterOptions = [
   { value: '' as const, label: '全部' },
@@ -556,6 +579,11 @@ const reqForm = reactive({
 
 onMounted(async () => {
   await Promise.all([loadTargets(), loadTemplates()])
+  await openFromQuery()
+})
+
+watch(() => route.query, () => {
+  void openFromQuery()
 })
 
 async function loadTargets() {
@@ -590,6 +618,10 @@ async function toggleExpand(id: number) {
     expandedDetail.value = null
     return
   }
+  await expandTarget(id)
+}
+
+async function expandTarget(id: number) {
   expandedId.value = id
   expandedDetail.value = null
   expandedLoading.value = true
@@ -600,6 +632,25 @@ async function toggleExpand(id: number) {
     expandedId.value = null
   } finally {
     expandedLoading.value = false
+  }
+}
+
+async function openFromQuery() {
+  const targetId = parsePositiveInt(route.query.targetId)
+  const requirementId = parsePositiveInt(route.query.requirementId)
+  if (targetId == null) return
+  if (filterStatus.value !== '') {
+    filterStatus.value = ''
+    await loadTargets()
+  }
+  await expandTarget(targetId)
+  highlightedRequirementId.value = requirementId
+  if (requirementId != null) {
+    window.setTimeout(() => {
+      if (highlightedRequirementId.value === requirementId) {
+        highlightedRequirementId.value = null
+      }
+    }, 3200)
   }
 }
 
@@ -840,6 +891,37 @@ async function onDeleteRequirement(targetId: number, reqId: number) {
 }
 
 // ------ helpers ------
+
+function createTaskFromRequirement(targetId: number, r: RequirementView) {
+  void router.push({
+    path: '/execution',
+    query: {
+      targetId: String(targetId),
+      requirementId: String(r.id),
+      title: `推进：${r.reqName}`,
+      description: r.description ?? '',
+      source: 'requirement'
+    }
+  })
+}
+
+function viewRequirementTasks(targetId: number, requirementId: number) {
+  void router.push({
+    path: '/execution',
+    query: {
+      targetId: String(targetId),
+      requirementId: String(requirementId),
+      source: 'requirement-filter'
+    }
+  })
+}
+
+function parsePositiveInt(raw: unknown): number | null {
+  const value = Array.isArray(raw) ? raw[0] : raw
+  if (typeof value !== 'string' || !/^\d+$/.test(value)) return null
+  const parsed = Number(value)
+  return parsed > 0 ? parsed : null
+}
 
 function progressPercent(t: TargetView): number {
   if (t.requirementCount === 0) return 0

@@ -1,0 +1,22 @@
+﻿@startuml
+!pragma layout smetana
+left to right direction
+actor "学生用户" as Student
+actor "AI 服务" as AI
+rectangle "执行任务模块" {
+  usecase "创建任务" as UC1
+  usecase "生成 AI 任务草案" as UC2
+  usecase "任务打卡" as UC3
+  usecase "提交完成证据" as UC4
+  usecase "更新任务状态" as UC5
+  usecase "查看任务看板" as UC6
+}
+Student --> UC1
+Student --> UC3
+Student --> UC4
+Student --> UC5
+Student --> UC6
+AI --> UC2
+UC1 --> UC2 : <<extend>>
+UC5 --> UC4 : <<include>>
+@enduml

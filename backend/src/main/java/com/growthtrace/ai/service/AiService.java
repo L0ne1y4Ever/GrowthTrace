@@ -5,6 +5,8 @@ import com.growthtrace.ai.dto.DiagnosisSummaryResult;
 import com.growthtrace.ai.dto.JournalExtractContext;
 import com.growthtrace.ai.dto.JournalExtractResult;
 import com.growthtrace.ai.dto.ProfileExtractResult;
+import com.growthtrace.ai.dto.TaskDraftContext;
+import com.growthtrace.ai.dto.TaskDraftResult;
 
 /**
  * 所有 AI 调用的统一入口。业务层只认这三个方法，不得直接访问 Prompt / Parser / Provider。
@@ -17,4 +19,6 @@ public interface AiService {
     JournalExtractResult extractJournal(JournalExtractContext context);
 
     DiagnosisSummaryResult summarizeDiagnosis(DiagnosisSummaryContext context);
+
+    TaskDraftResult generateTaskDraft(TaskDraftContext context);
 }

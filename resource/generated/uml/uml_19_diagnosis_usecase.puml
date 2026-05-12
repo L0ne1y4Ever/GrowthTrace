@@ -1,0 +1,21 @@
+﻿@startuml
+!pragma layout smetana
+left to right direction
+actor "学生用户" as Student
+actor "AI 服务" as AI
+rectangle "阶段诊断模块" {
+  usecase "选择诊断窗口" as UC1
+  usecase "触发阶段诊断" as UC2
+  usecase "查看规则指标" as UC3
+  usecase "查看 AI 总结" as UC4
+  usecase "记录轻复盘" as UC5
+  usecase "查看诊断历史" as UC6
+}
+Student --> UC1
+Student --> UC2
+Student --> UC3
+Student --> UC4
+Student --> UC5
+Student --> UC6
+AI --> UC4
+@enduml

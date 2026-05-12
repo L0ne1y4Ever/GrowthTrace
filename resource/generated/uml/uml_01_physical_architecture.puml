@@ -1,0 +1,21 @@
+@startuml
+!pragma layout smetana
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Microsoft YaHei
+
+actor "学生用户" as Student
+node "浏览器客户端\nVue 3 页面" as Browser
+node "后端应用服务\nSpring Boot REST API" as Backend
+database "MySQL 数据库\n成长业务数据" as DB
+cloud "OpenAI-compatible\nAI 服务" as AI
+node "本地/课程实验环境\nJDK + Node + Maven/npm" as Env
+
+Student --> Browser : 页面访问与操作
+Browser --> Backend : HTTP/JSON 请求
+Backend --> DB : 读写用户、画像、目标、任务、随记、诊断数据
+Backend --> AI : 画像抽取、随记抽取、阶段诊断、任务草案
+Env .. Browser : 前端运行
+Env .. Backend : 后端部署
+Env .. DB : 数据库存储
+@enduml

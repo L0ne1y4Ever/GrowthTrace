@@ -1,0 +1,16 @@
+﻿@startuml
+start
+:选择目标类型;
+:填写目标标题、说明和截止日期;
+:添加 requirement;
+if (是否设为主目标?) then (是)
+  :取消其他主目标标记;
+  :设置当前目标为主目标;
+else (否)
+  :保持普通目标;
+endif
+:保存目标信息;
+:进入目标详情;
+:选择 requirement 生成任务;
+stop
+@enduml
